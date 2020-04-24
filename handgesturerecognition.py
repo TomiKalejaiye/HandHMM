@@ -8,11 +8,11 @@ movements = {'cyl':[],'hook':[],'lat':[],'palm':[],'spher':[],'tip':[]}
 label = 1
 for movement in movements:
     skip_count = 0
-    for f in glob.glob("*/"+movement+"/*.csv"):
+    for f in glob.glob("male*/"+movement+"/*.csv"):
         skip_count +=1
-        if (skip_count <= 30):
+        if (skip_count <= 12):
             test_names.append(f)
-        if (skip_count > 30):
+        if (skip_count > 12):
             movements[movement].append(np.genfromtxt(f,delimiter=","))
     movements[movement] = np.concatenate(movements[movement],axis=0)
     labels.append(label*np.ones(len(movements[movement])))
@@ -185,6 +185,7 @@ t = time.time()
 preds = []
 trues = []
 correct_count = 0
+#test_names = [f for f in glob.glob("male_2/"+movement+"/*.csv") for movement in movements]
 for test_name in test_names:
     raw_obs = np.genfromtxt(test_name,delimiter=",")
     obs = km.predict(lda.transform(raw_obs))
