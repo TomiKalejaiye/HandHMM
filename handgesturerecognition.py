@@ -8,11 +8,11 @@ movements = {'cyl':[],'hook':[],'lat':[],'palm':[],'spher':[],'tip':[]}
 label = 1
 for movement in movements:
     skip_count = 0
-    for f in glob.glob(movement+"/*.csv"):
+    for f in glob.glob("*/"+movement+"/*.csv"):
         skip_count +=1
-        if (skip_count <= 6):
+        if (skip_count <= 30):
             test_names.append(f)
-        if (skip_count > 6):
+        if (skip_count > 30):
             movements[movement].append(np.genfromtxt(f,delimiter=","))
     movements[movement] = np.concatenate(movements[movement],axis=0)
     labels.append(label*np.ones(len(movements[movement])))
@@ -187,14 +187,14 @@ trues = []
 correct_count = 0
 for test_name in test_names:
     raw_obs = np.genfromtxt(test_name,delimiter=",")
-    obs = km.predict(lda.transform(raw_obs[:10]))
+    obs = km.predict(lda.transform(raw_obs))
     log_p = {'cyl':0,'hook':0,'lat':0,'palm':0,'spher':0,'tip':0}
     for movement in movements:
         new_alpha = np.zeros((len(obs), len(As[movement])))
         c_t = np.zeros((len(obs), len(As[movement])))
         new_alpha,c_t = forward(obs,As[movement],Bs[movement],PI,len(obs)-1,new_alpha,c_t)
         log_p[movement] = (-np.sum(np.log(1/c_t[:,0])))
-    real_test_class = test_name.split("/")[0]
+    real_test_class = test_name.split("/")[1]
     pred_test_class = max(log_p, key=log_p.get)
     trues.append(real_test_class)
     preds.append(pred_test_class)
