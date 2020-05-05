@@ -8,11 +8,11 @@ movements = {'cyl':[],'hook':[],'lat':[],'palm':[],'spher':[],'tip':[]}
 label = 1
 for movement in movements:
     skip_count = 0
-    for f in glob.glob("male*/"+movement+"/*.csv"):
+    for f in glob.glob("ALL FEATURES/Vini Data/"+movement+"/*.csv"):
         skip_count +=1
-        if (skip_count <= 12):
+        if (skip_count <= 6):
             test_names.append(f)
-        if (skip_count > 12):
+        if (skip_count > 6):
             movements[movement].append(np.genfromtxt(f,delimiter=","))
     movements[movement] = np.concatenate(movements[movement],axis=0)
     labels.append(label*np.ones(len(movements[movement])))
@@ -54,7 +54,7 @@ labels = np.concatenate(labels,axis=0)
 
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 
-lda = LinearDiscriminantAnalysis(n_components=5).fit(all_movements,labels)
+lda = LinearDiscriminantAnalysis(n_components=10).fit(all_movements,labels)
 all_movements = lda.transform(all_movements)
 
 km = KMeans(n_clusters=75).fit(all_movements)
@@ -80,7 +80,7 @@ import sys
 
 sys.setrecursionlimit(10**6) 
 
-num_states = 10
+num_states = 20
 num_sym = len(set(O_movements))
 
 Os = {'cyl':O_cyl,'hook':O_hook,'lat':O_lat,'palm':O_palm,'spher':O_spher,'tip':O_tip,}
@@ -179,34 +179,37 @@ plt.ylabel("Log Likelihood")
 plt.show()
 # %% 
 import time
-t = time.time()
+temp_names = [test_names[24]]
+#t = time.time()
 #wrong = []
 #wrong_scores = []
-preds = []
-trues = []
-correct_count = 0
-#test_names = [f for f in glob.glob("male_2/"+movement+"/*.csv") for movement in movements]
-for test_name in test_names:
-    raw_obs = np.genfromtxt(test_name,delimiter=",")
-    obs = km.predict(lda.transform(raw_obs))
-    log_p = {'cyl':0,'hook':0,'lat':0,'palm':0,'spher':0,'tip':0}
-    for movement in movements:
-        new_alpha = np.zeros((len(obs), len(As[movement])))
-        c_t = np.zeros((len(obs), len(As[movement])))
-        new_alpha,c_t = forward(obs,As[movement],Bs[movement],PI,len(obs)-1,new_alpha,c_t)
-        log_p[movement] = (-np.sum(np.log(1/c_t[:,0])))
-    real_test_class = test_name.split("/")[1]
-    pred_test_class = max(log_p, key=log_p.get)
-    trues.append(real_test_class)
-    preds.append(pred_test_class)
-    if (real_test_class == pred_test_class):
-        correct_count += 1
-    #else:
-        #wrong.append((test_name,pred_test_class))
-        #wrong_scores.append(log_p)
-elapsed = time.time() - t
+for w in range(23):
+    preds = []
+    trues = []
+    correct_count = 0
+    #test_names = [f for f in glob.glob("female_1/"+movement+"/*.csv") for movement in movements]
+    for test_name in temp_names:
+        raw_obs = np.genfromtxt(test_name,delimiter=",")
+        obs = km.predict(lda.transform(raw_obs[4*w:4*(w+1),:]))
+        log_p = {'cyl':0,'hook':0,'lat':0,'palm':0,'spher':0,'tip':0}
+        for movement in movements:
+            new_alpha = np.zeros((len(obs), len(As[movement])))
+            c_t = np.zeros((len(obs), len(As[movement])))
+            new_alpha,c_t = forward(obs,As[movement],Bs[movement],PI,len(obs)-1,new_alpha,c_t)
+            log_p[movement] = (-np.sum(np.log(1/c_t[:,0])))
+        real_test_class = test_name.split("/")[2]
+        pred_test_class = max(log_p, key=log_p.get)
+        trues.append(real_test_class)
+        preds.append(pred_test_class)
+        if (real_test_class == pred_test_class):
+            correct_count += 1
+        #else:
+            #wrong.append((test_name,pred_test_class))
+            #wrong_scores.append(log_p)
+#elapsed = time.time() - t
 
-print("The accuracy is: " + str(correct_count/len(test_names)))
+    print('[Window %d]: Accuracy: %.1f%%' % (w,(correct_count/len(temp_names))*100))
+    print(pred_test_class)
 #print("It took " + str(elapsed) + " seconds to classify " + str(len(test_names)) + " examples.")
 #%%
 with open('preds.txt', 'w') as f:
